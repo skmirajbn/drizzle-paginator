@@ -24,11 +24,17 @@ export interface PaginationResult<T> {
 export type MapperFunction<T> = (item: Record<string, unknown>) => T;
 
 export interface DrizzleDb {
-  execute: (query: SQLWrapper | string) => Promise<unknown>;
+  execute: <T = unknown>(query: SQLWrapper | string) => Promise<T>;
+}
+
+export interface PostgresDb {
+  $client: {
+    query: (sql: string) => Promise<QueryResult<Record<string, unknown>>>;
+  };
 }
 
 export declare class DrizzlePaginator<T = Record<string, unknown>> {
-  constructor(db: DrizzleDb, query: SQLWrapper | unknown, countColumn?: string);
+  constructor(db: DrizzleDb | PostgresDb | unknown, query: SQLWrapper | unknown, countColumn?: string);
   page(page: number): this;
   perPage(count: number): this;
   orderBy(column: string, direction?: "asc" | "desc"): this;

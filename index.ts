@@ -1,9 +1,25 @@
 import { SQLWrapper, sql } from "drizzle-orm";
 import { Pagination } from "./index.d";
+import { QueryResult } from "pg";
 
-// Define a more flexible database type to support different Drizzle database implementations
+// Define interfaces for database adapters
 export interface DrizzleDb {
-  execute: (query: SQLWrapper | string) => Promise<unknown>;
+  execute: <T = unknown>(query: SQLWrapper | string) => Promise<T>;
+}
+
+// Interface for PostgreSQL Database
+export interface PostgresDb {
+  $client: {
+    query: (sql: string) => Promise<QueryResult<Record<string, unknown>>>;
+  };
+}
+
+// Type guard for PostgreSQL database
+function isPostgresDb(db: unknown): db is PostgresDb {
+  return typeof db === 'object' && 
+         db !== null && 
+         '$client' in db &&
+         typeof (db as PostgresDb).$client?.query === 'function';
 }
 
 // Type guard to check if result has rows property
@@ -39,17 +55,32 @@ export class DrizzlePaginator<T = Record<string, unknown>> {
   private mapper: MapperFunction<T> | null = null;
   private allowedColumns: string[] = [];
   private countColumn: string = "*";
-  private db: DrizzleDb;
+  private dbAdapter: DrizzleDb;
 
   /**
    * Create a new paginator instance with a Drizzle query builder
    *
-   * @param db - The Drizzle database instance
+   * @param db - The database instance (can be Drizzle or PostgreSQL)
    * @param query - The Drizzle query builder object or relational query
    * @param countColumn - Column to use for count (defaults to "*")
    */
-  constructor(db: DrizzleDb, query: SQLWrapper | unknown, countColumn: string = "*") {
-    this.db = db;
+  constructor(db: DrizzleDb | PostgresDb | unknown, query: SQLWrapper | unknown, countColumn: string = "*") {
+    // Create an appropriate database adapter based on the type
+    if (typeof (db as DrizzleDb).execute === 'function') {
+      // It's already a DrizzleDb
+      this.dbAdapter = db as DrizzleDb;
+    } else if (isPostgresDb(db)) {
+      // It's a PostgreSQL database, create an adapter
+      this.dbAdapter = {
+        execute: async <T>(query: SQLWrapper | string): Promise<T> => {
+          const sqlText = typeof query === 'string' ? query : query.getSQL().toString();
+          return db.$client.query(sqlText) as unknown as T;
+        }
+      };
+    } else {
+      // Unsupported database type
+      throw new Error('Unsupported database implementation. Please provide a DrizzleDb or PostgreSQL database.');
+    }
     
     // Handle both SQLWrapper and relational queries
     if (typeof query === "object" && query !== null && "getSQL" in query) {
@@ -127,8 +158,8 @@ export class DrizzlePaginator<T = Record<string, unknown>> {
 
     // Execute queries
     const [countResult, dataResult] = await Promise.all([
-      this.db.execute(countQuery), 
-      this.db.execute(dataQuery)
+      this.dbAdapter.execute(countQuery), 
+      this.dbAdapter.execute(dataQuery)
     ]);
 
     // Get total count
@@ -140,7 +171,11 @@ export class DrizzlePaginator<T = Record<string, unknown>> {
     // Map results if mapper provided
     let data: T[] = [];
     if (hasRows(dataResult)) {
-      data = this.mapper ? dataResult.rows.map(this.mapper) : (dataResult.rows as T[]);
+      // Safely access rows with type checking
+      const rows = dataResult.rows as Record<string, unknown>[];
+      data = this.mapper 
+        ? rows.map(row => this.mapper!(row))
+        : rows as unknown as T[];
     }
 
     // Calculate pagination metadata
@@ -157,8 +192,6 @@ export class DrizzlePaginator<T = Record<string, unknown>> {
     };
   }
 }
-
-import { QueryResult } from "pg";
 
 export const withSqlPagination = <T>(queryResult: QueryResult<T[]>, perPage: number, page: number): Pagination<T[]> => {
   const totalItems = queryResult.rowCount ?? 0;
