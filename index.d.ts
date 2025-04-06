@@ -27,13 +27,13 @@ export type DrizzleDb = {
   execute: (query: SQLWrapper) => Promise<{ rows: Record<string, unknown>[] }>;
 };
 
-export declare class DrizzlePaginatorService<T = Record<string, unknown>> {
+export declare class DrizzlePaginator<T = Record<string, unknown>> {
   constructor(db: DrizzleDb, query: SQLWrapper | unknown, countColumn?: string);
   page(page: number): this;
   perPage(count: number): this;
   orderBy(column: string, direction?: "asc" | "desc"): this;
   allowColumns(columns: string[]): this;
-  map<R>(mapperFn: (item: Record<string, unknown>) => R): DrizzlePaginatorService<R>;
+  map<R>(mapperFn: (item: Record<string, unknown>) => R): DrizzlePaginator<R>;
   paginate(perPage?: number): Promise<PaginationResult<T>>;
 }
 

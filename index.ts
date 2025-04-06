@@ -22,7 +22,7 @@ export type MapperFunction<T> = (item: Record<string, unknown>) => T;
  * Paginator class for Drizzle ORM with a fluent API similar to Laravel's paginator
  * Works with both SQLWrapper and relational queries
  */
-export class DrizzlePaginatorService<T = Record<string, unknown>> {
+export class DrizzlePaginator<T = Record<string, unknown>> {
   private baseQuery: SQLWrapper;
   private currentPage: number = 1;
   private itemsPerPage: number = 10;
@@ -91,9 +91,9 @@ export class DrizzlePaginatorService<T = Record<string, unknown>> {
   /**
    * Set a function to map the results
    */
-  map<R>(mapperFn: (item: Record<string, unknown>) => R): DrizzlePaginatorService<R> {
+  map<R>(mapperFn: (item: Record<string, unknown>) => R): DrizzlePaginator<R> {
     this.mapper = mapperFn as unknown as MapperFunction<T>;
-    return this as unknown as DrizzlePaginatorService<R>;
+    return this as unknown as DrizzlePaginator<R>;
   }
 
   /**

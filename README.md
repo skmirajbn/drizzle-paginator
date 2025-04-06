@@ -21,7 +21,7 @@ npm install @skmirajbn/drizzle-paginator
 ### Basic Usage
 
 ```typescript
-import { DrizzlePaginatorService } from '@skmirajbn/drizzle-paginator';
+import { DrizzlePaginator } from '@skmirajbn/drizzle-paginator';
 import { db } from './your-drizzle-db-setup';
 import { users } from './your-schema';
 
@@ -29,7 +29,7 @@ import { users } from './your-schema';
 const query = db.select().from(users);
 
 // Create a paginator
-const paginator = new DrizzlePaginatorService(db, query);
+const paginator = new DrizzlePaginator(db, query);
 
 // Get paginated results
 const results = await paginator
@@ -52,7 +52,7 @@ console.log(results);
 ### Advanced Usage
 
 ```typescript
-import { DrizzlePaginatorService } from '@skmirajbn/drizzle-paginator';
+import { DrizzlePaginator } from '@skmirajbn/drizzle-paginator';
 import { db } from './your-drizzle-db-setup';
 import { users, posts } from './your-schema';
 import { sql, eq } from 'drizzle-orm';
@@ -69,7 +69,7 @@ const query = db.select({
 .groupBy(users.id, users.name, users.email);
 
 // Create a paginator with custom options
-const paginator = new DrizzlePaginatorService(db, query, 'userId');
+const paginator = new DrizzlePaginator(db, query, 'userId');
 
 // Map to a custom type
 interface UserWithPostCount {
@@ -113,7 +113,7 @@ const paginatedResults = withSqlPagination(result, 10, 1);
 
 ## API Reference
 
-### `DrizzlePaginatorService`
+### `DrizzlePaginator`
 
 #### Constructor
 
