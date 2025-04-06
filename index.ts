@@ -1,10 +1,18 @@
 import { SQLWrapper, sql } from "drizzle-orm";
 import { Pagination } from "./index.d";
 
-// Define a generic database type to support different Drizzle database implementations
-export type DrizzleDb = {
-  execute: (query: SQLWrapper) => Promise<{ rows: Record<string, unknown>[] }>;
-};
+// Define a more flexible database type to support different Drizzle database implementations
+export interface DrizzleDb {
+  execute: (query: SQLWrapper | string) => Promise<unknown>;
+}
+
+// Type guard to check if result has rows property
+function hasRows(result: unknown): result is { rows: Array<Record<string, unknown>> } {
+  return typeof result === 'object' && 
+         result !== null && 
+         'rows' in result && 
+         Array.isArray((result as { rows: unknown }).rows);
+}
 
 export interface PaginationResult<T> {
   data: T[];
@@ -124,10 +132,16 @@ export class DrizzlePaginator<T = Record<string, unknown>> {
     ]);
 
     // Get total count
-    const totalItems = Number(countResult.rows[0]?.count || 0);
+    let totalItems = 0;
+    if (hasRows(countResult) && countResult.rows[0]?.count !== undefined) {
+      totalItems = Number(countResult.rows[0].count);
+    }
 
     // Map results if mapper provided
-    const data = this.mapper ? dataResult.rows.map(this.mapper) : (dataResult.rows as T[]);
+    let data: T[] = [];
+    if (hasRows(dataResult)) {
+      data = this.mapper ? dataResult.rows.map(this.mapper) : (dataResult.rows as T[]);
+    }
 
     // Calculate pagination metadata
     const totalPages = Math.ceil(totalItems / this.itemsPerPage);

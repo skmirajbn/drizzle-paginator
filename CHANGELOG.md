@@ -2,6 +2,12 @@
 
 All notable changes to the `@skmirajbn/drizzle-paginator` package will be documented in this file.
 
+## [1.0.4] - 2025-04-06
+
+### Fixed
+- Fixed TypeScript compatibility issues when using with different Drizzle ORM versions
+- Made DrizzleDb interface more flexible to support various database implementations
+
 ## [1.0.2] - 2025-04-06
 
 ### Changed

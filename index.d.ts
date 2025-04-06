@@ -23,9 +23,9 @@ export interface PaginationResult<T> {
 
 export type MapperFunction<T> = (item: Record<string, unknown>) => T;
 
-export type DrizzleDb = {
-  execute: (query: SQLWrapper) => Promise<{ rows: Record<string, unknown>[] }>;
-};
+export interface DrizzleDb {
+  execute: (query: SQLWrapper | string) => Promise<unknown>;
+}
 
 export declare class DrizzlePaginator<T = Record<string, unknown>> {
   constructor(db: DrizzleDb, query: SQLWrapper | unknown, countColumn?: string);
