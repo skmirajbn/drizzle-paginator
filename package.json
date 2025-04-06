@@ -13,7 +13,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc",
     "prepublishOnly": "npm run build",
-    "publish": "npm publish --access public"
+    "release": "npm publish --access public"
   },
   "keywords": [
     "drizzle-orm",
