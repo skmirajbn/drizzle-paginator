@@ -1,0 +1,39 @@
+{
+  "name": "@skmirajbn/drizzle-paginator",
+  "version": "1.0.0",
+  "description": "A simple, flexible pagination utility for Drizzle ORM with a fluent API",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "drizzle-orm",
+    "pagination",
+    "sql",
+    "database",
+    "postgres"
+  ],
+  "author": "skmirajbn",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "@types/pg": "^8.10.9",
+    "typescript": "^5.8.3",
+    "drizzle-orm": "^0.41.0"
+  },
+  "peerDependencies": {
+    "drizzle-orm": "^0.41.0",
+    "pg": "^8.11.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/skmirajbn/drizzle-paginator"
+  }
+}
