@@ -63,7 +63,7 @@ export class DrizzlePaginator<T = Record<string, unknown>> {
   private baseQuery: SQLWrapper | DrizzleQueryBuilder;
   private currentPage: number = 1;
   private itemsPerPage: number = 10;
-  private sortBy: string = "id";
+  private sortBy: string | null = null;
   private sortDirection: "ASC" | "DESC" = "ASC";
   private mapper: MapperFunction<T> | null = null;
   private allowedColumns: string[] = [];
@@ -186,9 +186,9 @@ export class DrizzlePaginator<T = Record<string, unknown>> {
     // Create data query using direct methods
     let dataQuery = this.baseQuery;
     
-    // Apply sorting
-    if (this.sortBy) {
-      dataQuery = dataQuery.orderBy(sql.raw(this.sortBy), this.sortDirection.toLowerCase() as "asc" | "desc");
+    // Apply sorting only if orderBy was called
+    if (this.sortBy !== null) {
+      dataQuery = dataQuery.orderBy(sql.raw(this.sortBy as string), this.sortDirection.toLowerCase() as "asc" | "desc");
     }
     
     // Apply pagination
@@ -240,11 +240,20 @@ export class DrizzlePaginator<T = Record<string, unknown>> {
     // Use the provided query builder as a subquery
     const countQuery = sql`SELECT COUNT(${sql.raw(this.countColumn)}) as count FROM (${this.baseQuery}) as subquery`;
 
-    const dataQuery = sql`
-      SELECT * FROM (${this.baseQuery}) as subquery
-      ORDER BY ${sql.raw(this.sortBy)} ${sql.raw(this.sortDirection)}
-      LIMIT ${this.itemsPerPage} OFFSET ${offset}
-    `;
+    // Only include ORDER BY if explicitly set
+    let dataQuery;
+    if (this.sortBy !== null) {
+      dataQuery = sql`
+        SELECT * FROM (${this.baseQuery}) as subquery
+        ORDER BY ${sql.raw(this.sortBy)} ${sql.raw(this.sortDirection)}
+        LIMIT ${this.itemsPerPage} OFFSET ${offset}
+      `;
+    } else {
+      dataQuery = sql`
+        SELECT * FROM (${this.baseQuery}) as subquery
+        LIMIT ${this.itemsPerPage} OFFSET ${offset}
+      `;
+    }
 
     // Execute queries
     const [countResult, dataResult] = await Promise.all([

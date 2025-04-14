@@ -2,6 +2,12 @@
 
 All notable changes to the `@skmirajbn/drizzle-paginator` package will be documented in this file.
 
+## [1.0.8] - 2025-04-10
+
+### Fixed
+- Fixed issue where ORDER BY clause was always applied even when not explicitly requested
+- Only apply sorting when orderBy method is called, preserving the original query order otherwise
+
 ## [1.0.7] - 2025-04-10
 
 ### Added
