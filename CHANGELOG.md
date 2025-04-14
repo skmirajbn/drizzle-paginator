@@ -2,6 +2,13 @@
 
 All notable changes to the `@skmirajbn/drizzle-paginator` package will be documented in this file.
 
+## [1.0.7] - 2025-04-10
+
+### Added
+- Support for direct query methods (limit, offset, orderBy) for db.select() style queries
+- Automatic detection of query type to use the most efficient pagination approach
+- New DrizzleQueryBuilder interface for better type safety with direct query methods
+
 ## [1.0.5] - 2025-04-07
 
 ### Fixed

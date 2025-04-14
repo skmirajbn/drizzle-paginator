@@ -15,6 +15,8 @@ npm install @skmirajbn/drizzle-paginator
 - 🔄 Sorting by any column with ASC/DESC options
 - 🛠️ Custom mapper function support
 - 📊 Complete pagination metadata
+- 🚀 Smart detection of query type for optimal performance
+- 🧩 Support for both db.query.table.findMany() and db.select() style queries
 
 ## Usage
 
@@ -47,6 +49,54 @@ console.log(results);
 //   from: 1,             // Starting index
 //   to: 10               // Ending index
 // }
+```
+
+### With Relational Queries
+
+```typescript
+import { DrizzlePaginator } from '@skmirajbn/drizzle-paginator';
+import { db } from './your-drizzle-db-setup';
+import { users } from './your-schema';
+
+// Using relational query
+const query = db.query.users.findMany({
+  with: {
+    posts: true
+  },
+  where: (users, { eq }) => eq(users.isActive, true)
+});
+
+// Create paginator
+const paginator = new DrizzlePaginator(db, query);
+
+// Get paginated results
+const results = await paginator
+  .page(1)
+  .perPage(10)
+  .paginate();
+```
+
+### With Direct Query Builder
+
+```typescript
+import { DrizzlePaginator } from '@skmirajbn/drizzle-paginator';
+import { db } from './your-drizzle-db-setup';
+import { users } from './your-schema';
+import { eq } from 'drizzle-orm';
+
+// Using query builder pattern
+const query = db.select()
+  .from(users)
+  .where(eq(users.isActive, true));
+
+// Create paginator (automatically detects query type)
+const paginator = new DrizzlePaginator(db, query);
+
+// Get paginated results
+const results = await paginator
+  .page(1)
+  .perPage(10)
+  .paginate();
 ```
 
 ### Advanced Usage
@@ -111,6 +161,15 @@ const result = await pool.query('SELECT * FROM users');
 const paginatedResults = withSqlPagination(result, 10, 1);
 ```
 
+## How It Works
+
+Drizzle Paginator intelligently detects the type of query object and uses the most efficient approach for pagination:
+
+1. For relational queries (like `db.query.tablename.findMany()`), it creates SQL subqueries for optimal compatibility
+2. For builder pattern queries (like `db.select()...`), it uses direct query methods (`limit`, `offset`, `orderBy`) for better performance
+
+This automatic detection ensures optimal performance regardless of your preferred query style.
+
 ## API Reference
 
 ### `DrizzlePaginator`
@@ -118,11 +177,11 @@ const paginatedResults = withSqlPagination(result, 10, 1);
 #### Constructor
 
 ```typescript
-constructor(db: DrizzleDb, query: SQLWrapper | unknown, countColumn: string = "*")
+constructor(db: DrizzleDb | PostgresDb, query: SQLWrapper | DrizzleQueryBuilder | unknown, countColumn: string = "*")
 ```
 
-- `db`: Your Drizzle database instance
-- `query`: The Drizzle query builder object or a relational query
+- `db`: Your Drizzle database instance or PostgreSQL client
+- `query`: The Drizzle query builder object, relational query, or direct query with limit/offset methods
 - `countColumn`: Column to use for COUNT (defaults to "*")
 
 #### Methods

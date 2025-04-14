@@ -33,8 +33,15 @@ export interface PostgresDb {
   };
 }
 
+// Interface for Drizzle Query Builder with limit/offset methods
+export interface DrizzleQueryBuilder extends SQLWrapper {
+  limit: (limit: number) => DrizzleQueryBuilder;
+  offset: (offset: number) => DrizzleQueryBuilder;
+  orderBy: (column: string | SQLWrapper, direction?: "asc" | "desc") => DrizzleQueryBuilder;
+}
+
 export declare class DrizzlePaginator<T = Record<string, unknown>> {
-  constructor(db: DrizzleDb | PostgresDb | unknown, query: SQLWrapper | unknown, countColumn?: string);
+  constructor(db: DrizzleDb | PostgresDb | unknown, query: SQLWrapper | DrizzleQueryBuilder | unknown, countColumn?: string);
   page(page: number): this;
   perPage(count: number): this;
   orderBy(column: string, direction?: "asc" | "desc"): this;
