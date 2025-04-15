@@ -33,14 +33,7 @@ function hasRows(result: unknown): result is { rows: Array<Record<string, unknow
 
 // Type guard to check if query is a Drizzle Query Builder with limit/offset methods
 function isDrizzleQueryBuilder(query: unknown): query is DrizzleQueryBuilder {
-  return (
-    typeof query === "object" && 
-    query !== null && 
-    "limit" in query && 
-    "offset" in query && 
-    typeof (query as DrizzleQueryBuilder).limit === "function" &&
-    typeof (query as DrizzleQueryBuilder).offset === "function"
-  );
+  return typeof query === "object" && query !== null && "limit" in query && "offset" in query && typeof (query as DrizzleQueryBuilder).limit === "function" && typeof (query as DrizzleQueryBuilder).offset === "function";
 }
 
 export interface PaginationResult<T> {
@@ -181,27 +174,26 @@ export class DrizzlePaginator<T = Record<string, unknown>> {
     }
 
     // Clone the base query for count to avoid modifying the original
-    const countQuery = sql`SELECT COUNT(${sql.raw(this.countColumn)}) as count FROM (${this.baseQuery}) as subquery`;
+    const baseQuery = this.baseQuery.getSQL();
+    const countQuery = sql`SELECT COUNT(${sql.raw(this.countColumn)}) as count FROM (${baseQuery}) as subquery`;
 
     // Create data query using direct methods
     let dataQuery = this.baseQuery;
-    
+
     // Apply sorting only if orderBy was called
     if (this.sortBy !== null) {
       dataQuery = dataQuery.orderBy(sql.raw(this.sortBy as string), this.sortDirection.toLowerCase() as "asc" | "desc");
     }
-    
+
     // Apply pagination
     dataQuery = dataQuery.limit(this.itemsPerPage).offset(offset);
 
     // Execute queries: use the adapter for count, but direct query for data
-    const [countResult, dataResult] = await Promise.all([
-      this.dbAdapter.execute(countQuery),
-      dataQuery
-    ]);
+    const [countResult, dataResult] = await Promise.all([this.dbAdapter.execute(countQuery), dataQuery]);
 
     // Get total count
     let totalItems = 0;
+    console.log("countResult", countResult);
     if (hasRows(countResult) && countResult.rows[0]?.count !== undefined) {
       totalItems = Number(countResult.rows[0].count);
     }
@@ -210,9 +202,7 @@ export class DrizzlePaginator<T = Record<string, unknown>> {
     let data: T[] = [];
     if (Array.isArray(dataResult)) {
       // Direct query result might already be an array
-      data = this.mapper 
-        ? dataResult.map((row) => this.mapper!(row as Record<string, unknown>)) 
-        : (dataResult as unknown as T[]);
+      data = this.mapper ? dataResult.map((row) => this.mapper!(row as Record<string, unknown>)) : (dataResult as unknown as T[]);
     } else if (hasRows(dataResult)) {
       // Or it might have a rows property
       const rows = dataResult.rows as Record<string, unknown>[];
@@ -256,10 +246,7 @@ export class DrizzlePaginator<T = Record<string, unknown>> {
     }
 
     // Execute queries
-    const [countResult, dataResult] = await Promise.all([
-      this.dbAdapter.execute(countQuery), 
-      this.dbAdapter.execute(dataQuery)
-    ]);
+    const [countResult, dataResult] = await Promise.all([this.dbAdapter.execute(countQuery), this.dbAdapter.execute(dataQuery)]);
 
     // Get total count
     let totalItems = 0;
