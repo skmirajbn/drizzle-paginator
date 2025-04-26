@@ -193,7 +193,6 @@ export class DrizzlePaginator<T = Record<string, unknown>> {
 
     // Get total count
     let totalItems = 0;
-    console.log("countResult", countResult);
     if (hasRows(countResult) && countResult.rows[0]?.count !== undefined) {
       totalItems = Number(countResult.rows[0].count);
     }
